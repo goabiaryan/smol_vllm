@@ -4,31 +4,7 @@
 [![Python 3.10+](https://img.shields.io/pypi/pyversions/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A small paged-attention inference engine with paged KV cache, continuous batching, and preemption. 
-
-## Workflow
-
-**1. Start with FakeModel (default)** — zero deps, instant. Use raw token IDs.
-
-**2. Switch to CausalLM** — add `use_real_model=True` and install `smol-vllm[real]`. Use the tokenizer to encode text.
-
-Same API for both, only the engine constructor changes:
-
-| | Test first | Real inference |
-|--|------------|----------------|
-| Engine | `LLMEngine()` | `LLMEngine(use_real_model=True)` |
-| Input | token IDs, e.g. `[1, 2, 3, 4, 5]` | `tokenizer.encode("Hello!")` |
-
-## Why this project exists
-
-smol-vLLM is a **learning tool**, not a production engine. It focuses on:
-
-- **PagedAttention** — block-based KV cache and ref counting
-- **Continuous batching** — throughput gains as short jobs finish
-- **Preemption & swapping** — handling memory pressure
-- **Prefill vs decode** — compute-bound → memory-bound transition
-
-Start with FakeModel, then switch to CausalLM to compare timing and memory. It is fully Python based and requires no CUDA understanding, allowing anyone to learn basic inferencing without the additional complexity. 
+Paged-attention inference engine: KV cache, continuous batching, preemption. Educational, not production.
 
 ## Install
 
@@ -36,15 +12,17 @@ Start with FakeModel, then switch to CausalLM to compare timing and memory. It i
 pip install smol-vllm
 ```
 
-For CausalLM (real models):
+Real models (TinyLlama, Qwen2, etc.):
 
 ```bash
-pip install smol-vllm[real]
+pip install smol-vllm[tinyllama-1.1b]
+# or
+pip install smol-vllm[qwen2-0.5b]
 ```
 
-## Usage
+## Quick Start
 
-**Step 1: FakeModel** (no extra install)
+**FakeModel** (no extras):
 
 ```python
 from smol_vllm import LLMEngine
@@ -54,7 +32,7 @@ for token in engine.generate([1, 2, 3, 4, 5], max_tokens=20):
     print(token, end=" ")
 ```
 
-**Step 2: CausalLM** — set `use_real_model=True` and use the tokenizer:
+**CausalLM** (needs `[tinyllama-1.1b]` or `[qwen2-0.5b]`):
 
 ```python
 engine = LLMEngine(use_real_model=True)
@@ -64,20 +42,49 @@ for token in engine.generate(tokens, max_tokens=20):
     print(tokenizer.decode([token]), end="")
 ```
 
-Other models: `LLMEngine(use_real_model=True, model_name="Qwen/Qwen2-0.5B-Instruct")`
+## Models
 
-## Metrics
+| Model | `model_name` |
+|-------|---------------|
+| TinyLlama 1.1B | `TinyLlama/TinyLlama-1.1B-Chat-v1.0` (default) |
+| Qwen2 0.5B | `Qwen/Qwen2-0.5B-Instruct` |
+| Phi-2 | `microsoft/phi-2` |
+| Llama 3.2 | `meta-llama/Llama-3.2-1B-Instruct` |
+| Gemma 2 | `google/gemma-2-2b-it` |
+| Mistral | `mistralai/Mistral-7B-Instruct-v0.3` |
 
-With `enable_metrics=True` (default), each step prints latency, throughput (tok/s), KV util, and optional GPU/CPU stats. 
+Gated models (Llama, Gemma, etc.) need a HuggingFace token. Options:
 
-At the end, `engine.metrics.print_summary()` and logs go to `logs/smol_vllm_*.csv`.
+**1. Env var** (recommended):
+```bash
+export HF_TOKEN=hf_xxxxxxxxxxxx
+```
+
+**2. In code**:
+```python
+LLMEngine(use_real_model=True, model_name="meta-llama/Llama-3.2-1B-Instruct", hf_token="hf_xxxx")
+```
+
+Get a token: [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). Accept the model's license on its HF page first.
 
 ## Demo
 
 ```bash
-pip install smol-vllm
 smol-vllm-demo
 ```
+
+## What It Teaches
+
+- **PagedAttention** — block-based KV cache, ref counting
+- **Continuous batching** — short jobs fill slots immediately
+- **Preemption & swapping** — when memory runs low
+- **Prefill vs decode** — compute-bound → memory-bound
+
+Workflow: run with FakeModel first (zero deps), then switch to CausalLM to compare.
+
+## Metrics
+
+Step-level: prefill/decode latency, tok/s, KV util. Summary and CSV logs in `logs/`.
 
 ## License
 

@@ -16,13 +16,14 @@ class LLMEngine:
         max_batch_size: int = 8,
         use_real_model: bool = False,
         model_name: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        hf_token: str | None = None,
         enable_metrics: bool = True,
     ):
         self.block_manager = BlockSpaceManager(num_gpu_blocks, block_size)
         self.scheduler = Scheduler(self.block_manager, max_batch_size)
         if use_real_model:
             from .causal_model import CausalLM
-            self.model = CausalLM(model_name=model_name)
+            self.model = CausalLM(model_name=model_name, token=hf_token)
         else:
             self.model = FakeModel()
         self.request_counter = 0

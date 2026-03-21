@@ -9,6 +9,7 @@ class CausalLM:
         self,
         model_name: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         device: str | None = None,
+        token: str | None = None,
     ):
         import torch
 
@@ -21,12 +22,16 @@ class CausalLM:
 
         print(f"[smol-vllm] Loading {model_name} on {device} ...")
         t0 = time.perf_counter()
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        import os
+        load_token = token or os.environ.get("HF_TOKEN")
+        load_kw = {"token": load_token} if load_token else {}
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, **load_kw)
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,
             torch_dtype=torch.float16 if device == "cuda" else torch.float32,
             device_map="auto" if device == "cuda" else None,
             low_cpu_mem_usage=True,
+            **load_kw,
         )
         if device == "cpu":
             self.model = self.model.to(device)

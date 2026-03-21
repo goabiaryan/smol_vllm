@@ -22,8 +22,9 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
-real = ["torch", "transformers", "accelerate"]
 metrics = ["psutil"]
+tinyllama-1.1b = ["torch", "transformers", "accelerate"]
+qwen2-0.5b = ["torch", "transformers", "accelerate"]
 
 [project.scripts]
 smol-vllm-demo = "smol_vllm.demo:main"
