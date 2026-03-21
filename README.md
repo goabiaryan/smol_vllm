@@ -4,7 +4,34 @@
 [![Python 3.10+](https://img.shields.io/pypi/pyversions/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A small paged-attention inference engine: paged KV cache, continuous batching, preemption. Pure Python by default; optional CausalLM backend for real inference.
+Smol_vllm is a small paged-attention inference engine with paged KV cache, continuous batching, preemption.
+
+## Why this project exists
+
+smol-vLLM is **not a production engine** - it's a learning tool to deeply understand:
+
+- **PagedAttention** — how block-based KV cache + ref counting avoids wasted memory
+- **Continuous batching** — why it gives huge throughput gains (short jobs fill slots immediately)
+- **Preemption & swapping** — handling memory pressure when blocks run low
+- **Prefill vs decode** — the compute-bound → memory-bound transition (KV cache reads)
+
+Start with the fake model (zero deps, instant), then flip to CausalLM to feel the difference.
+
+## Metrics
+
+With `enable_metrics=True` (default), each step prints vLLM/SGLang-style metrics to the console:
+
+- **Latency**: prefill_ms, decode_ms
+- **Throughput**: tok/s (tokens per second)
+- **Counters**: prompt_tokens_total, generation_tokens_total
+- **Server state**: running, waiting, swapped, kv_util%
+- **Optional**: GPU memory (if CUDA), CPU % (if psutil installed: `pip install smol-vllm[metrics]`)
+
+At the end of a run, `engine.metrics.print_summary()` shows TTFT, e2e latency, and averages.
+
+## CausalLM (real models)
+
+The `CausalLM` backend supports any **HuggingFace causal LM** via `model_name`: TinyLlama, Llama, Phi, Qwen, Gemma, Mistral, etc. Uses `AutoModelForCausalLM` under the hood.
 
 ## Install
 
@@ -48,21 +75,6 @@ for token in engine.generate(tokens, max_tokens=20):
 pip install smol-vllm
 smol-vllm-demo
 ```
-
-## Why this project exists
-
-smol-vLLM is **not a production engine** — it's a learning tool to deeply understand:
-
-- **PagedAttention** — how block-based KV cache + ref counting avoids wasted memory
-- **Continuous batching** — why it gives huge throughput gains (short jobs fill slots immediately)
-- **Preemption & swapping** — handling memory pressure when blocks run low
-- **Prefill vs decode** — the compute-bound → memory-bound transition (KV cache reads)
-
-Start with the fake model (zero deps, instant), then flip to CausalLM to feel the difference.
-
-## CausalLM (real models)
-
-The `CausalLM` backend supports any **HuggingFace causal LM** via `model_name`: TinyLlama, Llama, Phi, Qwen, Gemma, Mistral, etc. Uses `AutoModelForCausalLM` under the hood.
 
 ## License
 

@@ -35,7 +35,8 @@ def run_exp1_continuous_batching():
             f"swapped={swapped:2d} | blocks_used={util:5.1f}%"
         )
 
-    print(f"\n  Done in {step} steps. All 20 requests finished.\n")
+    print(f"\n  Done in {step} steps. All 20 requests finished.")
+    engine.metrics.print_summary()
 
 
 def run_exp2_memory_pressure():
@@ -62,7 +63,8 @@ def run_exp2_memory_pressure():
             f"swapped={len(engine.scheduler.swapped):2d} | util={util:.0f}%"
         )
 
-    print(f"\n  Done in {step} steps.\n")
+    print(f"\n  Done in {step} steps.")
+    engine.metrics.print_summary()
 
 
 def run_exp3_prefix_sharing():
@@ -105,11 +107,13 @@ def run_exp4_throughput_scaling():
 
     batch_sizes = [1, 8, 16]
     tok_per_secs = []
+    engines = []
 
     for batch_size in batch_sizes:
         engine = LLMEngine(
             num_gpu_blocks=64, block_size=16, max_batch_size=batch_size
         )
+        engines.append(engine)
 
         for i in range(batch_size):
             engine.add_request(list(range(50)), max_tokens=20)
@@ -132,6 +136,8 @@ def run_exp4_throughput_scaling():
         bar_len = int(40 * tps / max_tps)
         bar = "█" * bar_len + "░" * (40 - bar_len)
         print(f"    batch={bs:2d} |{bar}| {tps:.1f}")
+    if engines:
+        engines[-1].metrics.print_summary()
 
     print()
 
@@ -238,6 +244,7 @@ def run_exp5_educational_comparison():
     if torch.cuda.is_available():
         mb = torch.cuda.max_memory_allocated() / 1024**2
         print(f"  VRAM peaked at {mb:.0f} MB")
+    engine_real.metrics.print_summary()
 
 
 def main():
