@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/pypi/pyversions/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A small paged-attention inference engine with paged KV cache, continuous batching, and preemption.
+A small paged-attention inference engine with paged KV cache, continuous batching, and preemption. 
 
 ## Workflow
 
@@ -12,12 +12,12 @@ A small paged-attention inference engine with paged KV cache, continuous batchin
 
 **2. Switch to CausalLM** — add `use_real_model=True` and install `smol-vllm[real]`. Use the tokenizer to encode text.
 
-Same API for both; only the engine constructor changes:
+Same API for both, only the engine constructor changes:
 
-| Step | Engine | Input |
-|------|--------|-------|
-| Test first | `LLMEngine()` | token IDs, e.g. `[1, 2, 3, 4, 5]` |
-| Real inference | `LLMEngine(use_real_model=True)` | `tokenizer.encode("Hello!")` |
+| | Test first | Real inference |
+|--|------------|----------------|
+| Engine | `LLMEngine()` | `LLMEngine(use_real_model=True)` |
+| Input | token IDs, e.g. `[1, 2, 3, 4, 5]` | `tokenizer.encode("Hello!")` |
 
 ## Why this project exists
 
@@ -28,7 +28,7 @@ smol-vLLM is a **learning tool**, not a production engine. It focuses on:
 - **Preemption & swapping** — handling memory pressure
 - **Prefill vs decode** — compute-bound → memory-bound transition
 
-Start with FakeModel, then switch to CausalLM to compare timing and memory.
+Start with FakeModel, then switch to CausalLM to compare timing and memory. It is fully Python based and requires no CUDA understanding, allowing anyone to learn basic inferencing without the additional complexity. 
 
 ## Install
 
@@ -68,7 +68,9 @@ Other models: `LLMEngine(use_real_model=True, model_name="Qwen/Qwen2-0.5B-Instru
 
 ## Metrics
 
-With `enable_metrics=True` (default), each step prints latency, throughput (tok/s), KV util, and optional GPU/CPU stats. At the end, `engine.metrics.print_summary()` and logs go to `logs/smol_vllm_*.csv`.
+With `enable_metrics=True` (default), each step prints latency, throughput (tok/s), KV util, and optional GPU/CPU stats. 
+
+At the end, `engine.metrics.print_summary()` and logs go to `logs/smol_vllm_*.csv`.
 
 ## Demo
 
