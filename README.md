@@ -1,6 +1,12 @@
 # smol-vllm
 
-From-scratch paged-attention inference engine: paged KV cache, continuous batching, preemption. Pure Python, no external deps.
+[![PyPI version](https://img.shields.io/pypi/v/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
+[![Python 3.10+](https://img.shields.io/pypi/pyversions/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A small paged-attention inference engine with paged KV cache, continuous batching, preemption. 
+
+Pure Python, no external dependencies.
 
 ## Install
 
@@ -11,6 +17,7 @@ pip install smol-vllm
 Or from source:
 
 ```bash
+git clone .... 
 pip install .
 ```
 
