@@ -4,34 +4,31 @@
 [![Python 3.10+](https://img.shields.io/pypi/pyversions/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Smol_vllm is a small paged-attention inference engine with paged KV cache, continuous batching, preemption.
+A small paged-attention inference engine with paged KV cache, continuous batching, and preemption.
+
+## Workflow
+
+**1. Start with FakeModel (default)** — zero deps, instant. Use raw token IDs.
+
+**2. Switch to CausalLM** — add `use_real_model=True` and install `smol-vllm[real]`. Use the tokenizer to encode text.
+
+Same API for both; only the engine constructor changes:
+
+| Step | Engine | Input |
+|------|--------|-------|
+| Test first | `LLMEngine()` | token IDs, e.g. `[1, 2, 3, 4, 5]` |
+| Real inference | `LLMEngine(use_real_model=True)` | `tokenizer.encode("Hello!")` |
 
 ## Why this project exists
 
-smol-vLLM is **not a production engine** - it's a learning tool to deeply understand:
+smol-vLLM is a **learning tool**, not a production engine. It focuses on:
 
-- **PagedAttention** — how block-based KV cache + ref counting avoids wasted memory
-- **Continuous batching** — why it gives huge throughput gains (short jobs fill slots immediately)
-- **Preemption & swapping** — handling memory pressure when blocks run low
-- **Prefill vs decode** — the compute-bound → memory-bound transition (KV cache reads)
+- **PagedAttention** — block-based KV cache and ref counting
+- **Continuous batching** — throughput gains as short jobs finish
+- **Preemption & swapping** — handling memory pressure
+- **Prefill vs decode** — compute-bound → memory-bound transition
 
-Start with the fake model (zero deps, instant), then flip to CausalLM to feel the difference.
-
-## Metrics
-
-With `enable_metrics=True` (default), each step prints vLLM/SGLang-style metrics to the console:
-
-- **Latency**: prefill_ms, decode_ms
-- **Throughput**: tok/s (tokens per second)
-- **Counters**: prompt_tokens_total, generation_tokens_total
-- **Server state**: running, waiting, swapped, kv_util%
-- **Optional**: GPU memory (if CUDA), CPU % (if psutil installed: `pip install smol-vllm[metrics]`)
-
-At the end of a run, `engine.metrics.print_summary()` shows TTFT, e2e latency, and averages.
-
-## CausalLM (real models)
-
-The `CausalLM` backend supports any **HuggingFace causal LM** via `model_name`: TinyLlama, Llama, Phi, Qwen, Gemma, Mistral, etc. Uses `AutoModelForCausalLM` under the hood.
+Start with FakeModel, then switch to CausalLM to compare timing and memory.
 
 ## Install
 
@@ -39,27 +36,25 @@ The `CausalLM` backend supports any **HuggingFace causal LM** via `model_name`: 
 pip install smol-vllm
 ```
 
-For real CausalLM backend:
+For CausalLM (real models):
 
 ```bash
 pip install smol-vllm[real]
 ```
 
-Or: `pip install torch transformers accelerate`
-
 ## Usage
 
-Default (fake model, token IDs):
+**Step 1: FakeModel** (no extra install)
 
 ```python
 from smol_vllm import LLMEngine
 
-engine = LLMEngine(num_gpu_blocks=64, block_size=16, max_batch_size=8)
+engine = LLMEngine()
 for token in engine.generate([1, 2, 3, 4, 5], max_tokens=20):
     print(token, end=" ")
 ```
 
-Real model (install with `pip install smol-vllm[real]`). Defaults to TinyLlama; pass `model_name` for any HuggingFace causal LM:
+**Step 2: CausalLM** — set `use_real_model=True` and use the tokenizer:
 
 ```python
 engine = LLMEngine(use_real_model=True)
@@ -68,6 +63,12 @@ tokens = tokenizer.encode("Hello!", add_special_tokens=False)
 for token in engine.generate(tokens, max_tokens=20):
     print(tokenizer.decode([token]), end="")
 ```
+
+Other models: `LLMEngine(use_real_model=True, model_name="Qwen/Qwen2-0.5B-Instruct")`
+
+## Metrics
+
+With `enable_metrics=True` (default), each step prints latency, throughput (tok/s), KV util, and optional GPU/CPU stats. At the end, `engine.metrics.print_summary()` and logs go to `logs/smol_vllm_*.csv`.
 
 ## Demo
 

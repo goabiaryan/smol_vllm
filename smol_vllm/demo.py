@@ -1,10 +1,12 @@
 import random
 import time
+from datetime import datetime
+from pathlib import Path
 
 from . import BlockSpaceManager, LLMEngine
 
 
-def run_exp1_continuous_batching():
+def _run_exp1():
     print("\n" + "=" * 60)
     print("Experiment 1: Continuous Batching")
     print("=" * 60)
@@ -37,9 +39,10 @@ def run_exp1_continuous_batching():
 
     print(f"\n  Done in {step} steps. All 20 requests finished.")
     engine.metrics.print_summary()
+    return engine
 
 
-def run_exp2_memory_pressure():
+def _run_exp2():
     print("\n" + "=" * 60)
     print("Experiment 2: Memory Pressure & Preemption")
     print("=" * 60)
@@ -65,6 +68,7 @@ def run_exp2_memory_pressure():
 
     print(f"\n  Done in {step} steps.")
     engine.metrics.print_summary()
+    return engine
 
 
 def run_exp3_prefix_sharing():
@@ -99,7 +103,7 @@ def run_exp3_prefix_sharing():
     print("  (Note: copy_on_write shares blocks, so fewer unique blocks used)\n")
 
 
-def run_exp4_throughput_scaling():
+def _run_exp4():
     print("\n" + "=" * 60)
     print("Experiment 4: Throughput Scaling")
     print("=" * 60)
@@ -140,6 +144,7 @@ def run_exp4_throughput_scaling():
         engines[-1].metrics.print_summary()
 
     print()
+    return engines
 
 
 def run_block_manager_checkpoint():
@@ -186,7 +191,7 @@ def run_scheduler_checkpoint():
     print("  Checkpoint passed: only ≤4 running at once.\n")
 
 
-def run_exp5_educational_comparison():
+def _run_exp5():
     print("\n" + "=" * 60)
     print("Experiment 5: Fake vs Real Model (Educational)")
     print("=" * 60)
@@ -245,6 +250,29 @@ def run_exp5_educational_comparison():
         mb = torch.cuda.max_memory_allocated() / 1024**2
         print(f"  VRAM peaked at {mb:.0f} MB")
     engine_real.metrics.print_summary()
+    return engine_real
+
+
+def _save_metrics_log(all_metrics: list):
+    if not all_metrics:
+        return
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_dir = Path("logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    path = log_dir / f"smol_vllm_{ts}.csv"
+    import csv
+    all_rows = []
+    for name, m in all_metrics:
+        for r in m.to_csv_rows():
+            r["experiment"] = name
+            r["timestamp"] = datetime.now().isoformat()
+            all_rows.append(r)
+    if all_rows:
+        with open(path, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(all_rows[0].keys()))
+            w.writeheader()
+            w.writerows(all_rows)
+        print(f"\n  [metrics] saved to {path}")
 
 
 def main():
@@ -252,12 +280,28 @@ def main():
     print("#  smol-vLLM Demo - Paged Attention Inference Engine")
     print("#" * 60)
 
+    all_metrics: list[tuple[str, object]] = []
+
     run_block_manager_checkpoint()
     run_scheduler_checkpoint()
-    run_exp1_continuous_batching()
-    run_exp2_memory_pressure()
-    run_exp3_prefix_sharing()
-    run_exp4_throughput_scaling()
-    run_exp5_educational_comparison()
 
+    engine1 = _run_exp1()
+    if engine1:
+        all_metrics.append(("exp1_continuous_batching", engine1.metrics))
+
+    engine2 = _run_exp2()
+    if engine2:
+        all_metrics.append(("exp2_memory_pressure", engine2.metrics))
+
+    run_exp3_prefix_sharing()
+
+    engines4 = _run_exp4()
+    if engines4:
+        all_metrics.append(("exp4_throughput", engines4[-1].metrics))
+
+    engine5 = _run_exp5()
+    if engine5:
+        all_metrics.append(("exp5_educational", engine5.metrics))
+
+    _save_metrics_log(all_metrics)
     print("All experiments complete.")

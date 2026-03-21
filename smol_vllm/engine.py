@@ -56,7 +56,7 @@ class LLMEngine:
         self.groups[group_id] = group
         self.scheduler.waiting.append(group)
         if self.enable_metrics:
-            self.metrics.record_request_start(group_id)
+            self.metrics.record_request_start(group_id, prompt_len=len(prompt_tokens))
 
     def step(self) -> List[RequestOutput]:
         step_start = time.perf_counter()
