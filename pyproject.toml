@@ -22,6 +22,7 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+real = ["torch", "transformers", "accelerate"]
 
 [project.scripts]
 smol-vllm-demo = "smol_vllm.demo:main"

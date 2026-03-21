@@ -180,6 +180,66 @@ def run_scheduler_checkpoint():
     print("  Checkpoint passed: only ≤4 running at once.\n")
 
 
+def run_exp5_educational_comparison():
+    print("\n" + "=" * 60)
+    print("Experiment 5: Fake vs Real Model (Educational)")
+    print("=" * 60)
+
+    print("\n=== Fake model (simulated timing, zero deps) ===")
+    engine_fake = LLMEngine(
+        num_gpu_blocks=128, block_size=16, max_batch_size=4
+    )
+    for i in range(4):
+        engine_fake.add_request(list(range(10 + i * 5, 30 + i * 5)), max_tokens=10)
+
+    start = time.perf_counter()
+    total = 0
+    while True:
+        outputs = engine_fake.step()
+        total += len(outputs)
+        if all(o.finished for o in outputs):
+            break
+    elapsed = time.perf_counter() - start
+    print(f"  4 prompts, ~20 tok each, max 10 output → {elapsed:.2f}s, {total/elapsed:.0f} tok/s (simulated)")
+
+    try:
+        import torch
+        from transformers import AutoTokenizer
+    except ImportError:
+        print("\n=== CausalLM (skipped: pip install torch transformers accelerate) ===")
+        print("  Install extras to compare: pip install torch transformers accelerate")
+        return
+
+    print("\n=== CausalLM (actual compute + memory) ===")
+    engine_real = LLMEngine(
+        num_gpu_blocks=128,
+        block_size=16,
+        max_batch_size=2,
+        use_real_model=True,
+    )
+    tokenizer = engine_real.model.tokenizer
+    prompts = [
+        "Hello, how are you?",
+        "What is the capital of France?",
+    ]
+    for p in prompts:
+        tokens = tokenizer.encode(p, add_special_tokens=False)
+        engine_real.add_request(tokens, max_tokens=8)
+
+    start = time.perf_counter()
+    total = 0
+    while True:
+        outputs = engine_real.step()
+        total += len(outputs)
+        if all(o.finished for o in outputs):
+            break
+    elapsed = time.perf_counter() - start
+    print(f"  2 prompts → {elapsed:.2f}s, {total/elapsed:.1f} tok/s (real)")
+    if torch.cuda.is_available():
+        mb = torch.cuda.max_memory_allocated() / 1024**2
+        print(f"  VRAM peaked at {mb:.0f} MB")
+
+
 def main():
     print("\n" + "#" * 60)
     print("#  smol-vLLM Demo - Paged Attention Inference Engine")
@@ -191,5 +251,6 @@ def main():
     run_exp2_memory_pressure()
     run_exp3_prefix_sharing()
     run_exp4_throughput_scaling()
+    run_exp5_educational_comparison()
 
     print("All experiments complete.")

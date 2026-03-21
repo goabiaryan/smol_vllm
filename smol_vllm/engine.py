@@ -12,10 +12,16 @@ class LLMEngine:
         num_gpu_blocks: int = 64,
         block_size: int = 16,
         max_batch_size: int = 8,
+        use_real_model: bool = False,
+        model_name: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     ):
         self.block_manager = BlockSpaceManager(num_gpu_blocks, block_size)
         self.scheduler = Scheduler(self.block_manager, max_batch_size)
-        self.model = FakeModel()
+        if use_real_model:
+            from .causal_model import CausalLM
+            self.model = CausalLM(model_name=model_name)
+        else:
+            self.model = FakeModel()
         self.request_counter = 0
         self.groups: Dict[int, SequenceGroup] = {}
 
@@ -84,6 +90,8 @@ class LLMEngine:
             if finished:
                 seq.status = SequenceStatus.FINISHED
                 self.block_manager.free(group.group_id)
+                if hasattr(self.model, "clear_cache"):
+                    self.model.clear_cache(group.group_id)
                 if group in self.scheduler.running:
                     self.scheduler.running.remove(group)
 

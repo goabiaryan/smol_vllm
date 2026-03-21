@@ -1,4 +1,5 @@
 from .block_manager import BlockSpaceManager
+from .causal_model import CausalLM
 from .engine import LLMEngine
 from .model import FakeModel
 from .scheduler import Scheduler
@@ -12,6 +13,7 @@ from .sequence import (
 
 __all__ = [
     "BlockSpaceManager",
+    "CausalLM",
     "LLMEngine",
     "FakeModel",
     "Scheduler",
