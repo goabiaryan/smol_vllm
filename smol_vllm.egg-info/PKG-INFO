@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: smol-vllm
-Version: 0.1.1
+Version: 0.1.2
 Summary: From-scratch paged-attention inference engine: paged KV cache, continuous batching, preemption
 Author: Abi Aryan
 License: MIT
