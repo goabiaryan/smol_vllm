@@ -1,3 +1,16 @@
 
 [dev]
 pytest
+
+[metrics]
+psutil
+
+[qwen2-0.5b]
+torch
+transformers
+accelerate
+
+[tinyllama-1.1b]
+torch
+transformers
+accelerate

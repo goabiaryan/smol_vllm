@@ -1,9 +1,12 @@
+LICENSE
 README.md
 pyproject.toml
 smol_vllm/__init__.py
 smol_vllm/block_manager.py
+smol_vllm/causal_model.py
 smol_vllm/demo.py
 smol_vllm/engine.py
+smol_vllm/metrics.py
 smol_vllm/model.py
 smol_vllm/scheduler.py
 smol_vllm/sequence.py

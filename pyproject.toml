@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smol-vllm"
-version = "0.1.0"
+version = "0.1.1"
 description = "From-scratch paged-attention inference engine: paged KV cache, continuous batching, preemption"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
-authors = [{ name = "smol-vllm" }]
+authors = [{ name = "Abi Aryan" }]
 keywords = ["llm", "inference", "vllm", "paged-attention", "continuous-batching"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -20,11 +20,15 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
+[project.urls]
+Repository = "https://github.com/goabiaryan/smol_vllm"
+Homepage = "https://github.com/goabiaryan/smol_vllm"
+
 [project.optional-dependencies]
 dev = ["pytest"]
 metrics = ["psutil"]
-tinyllama-1.1b = ["torch", "transformers", "accelerate"]
-qwen2-0.5b = ["torch", "transformers", "accelerate"]
+"tinyllama-1.1b" = ["torch", "transformers", "accelerate"]
+"qwen2-0.5b" = ["torch", "transformers", "accelerate"]
 
 [project.scripts]
 smol-vllm-demo = "smol_vllm.demo:main"

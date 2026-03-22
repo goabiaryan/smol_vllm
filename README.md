@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
 [![Python 3.10+](https://img.shields.io/pypi/pyversions/smol-vllm.svg)](https://pypi.org/project/smol-vllm/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/badge/GitHub-goabiaryan%2Fsmol__vllm-blue)](https://github.com/goabiaryan/smol_vllm)
 
 Paged-attention inference engine: KV cache, continuous batching, preemption. Educational, not production.
 

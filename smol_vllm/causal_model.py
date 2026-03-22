@@ -3,6 +3,12 @@ from typing import List
 
 from .sequence import SequenceGroup
 
+# Transformers 4.46+ requires Cache objects for past_key_values (no longer legacy tuples)
+try:
+    from transformers.cache_utils import DynamicCache
+except ImportError:
+    DynamicCache = None
+
 
 class CausalLM:
     def __init__(
@@ -72,10 +78,14 @@ class CausalLM:
 
         past = outputs.past_key_values
         for i, group in enumerate(groups):
-            layer_caches = []
-            for k, v in past:
-                layer_caches.append((k[i : i + 1].clone(), v[i : i + 1].clone()))
-            self.kv_caches[group.group_id] = tuple(layer_caches)
+            if DynamicCache is not None and isinstance(past, DynamicCache):
+                splits = past.batch_split(full_batch_size=len(groups), split_size=1)
+                self.kv_caches[group.group_id] = splits[i]
+            else:
+                layer_caches = []
+                for k, v in past:
+                    layer_caches.append((k[i : i + 1].clone(), v[i : i + 1].clone()))
+                self.kv_caches[group.group_id] = tuple(layer_caches)
 
         avg_len = sum(len(p) for p in prompts) / len(prompts)
         print(
@@ -98,6 +108,10 @@ class CausalLM:
             input_ids = torch.tensor([[last_token]], dtype=torch.long).to(self.device)
             past = self.kv_caches.get(group.group_id)
 
+            # Transformers 4.46+ requires Cache or None; convert legacy tuple if needed
+            if past is not None and DynamicCache is not None and not isinstance(past, DynamicCache):
+                past = DynamicCache.from_legacy_cache(past)
+
             with torch.no_grad():
                 outputs = self.model(
                     input_ids=input_ids,
@@ -110,10 +124,8 @@ class CausalLM:
             next_tok = torch.argmax(logits, dim=-1).item()
             next_tokens.append(next_tok)
 
-            layer_caches = []
-            for k, v in outputs.past_key_values:
-                layer_caches.append((k.clone(), v.clone()))
-            self.kv_caches[group.group_id] = tuple(layer_caches)
+            # Store the updated cache (DynamicCache or legacy tuple)
+            self.kv_caches[group.group_id] = outputs.past_key_values
 
         elapsed = time.perf_counter() - t0
         print(
